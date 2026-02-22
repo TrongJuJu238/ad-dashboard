@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\core",
+    "\\logs",
+    "\\routes",
+    "\\services",
+    "\\static",
+    "\\static\\img",
+    "\\templates",
+    "\\__pycache__"
+  ],
+  "SelectedNode": "\\templates\\index.html",
+  "PreviewInSolutionExplorer": false
+}

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AD Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Admin Logo">
+                <span>AD Management</span>
+            </div>
+            <ul class="menu">
+
+                <!-- USER MANAGEMENT -->
+                <li class="menu-group active">
+                    <div class="menu-parent">
+                        <span class="material-symbols-rounded icon">admin_panel_settings</span>
+                        <span>Management</span>
+                        <span class="material-symbols-rounded arrow">expand_more</span>
+                    </div>
+
+                    <ul class="submenu">
+                        <li class="menu-group {% if tab == 'user' %}active{% endif %}">
+                            <a href="/" style="text-decoration:none;color:inherit;">
+                                <div class="menu-parent">
+                                    <span class="material-symbols-rounded icon">admin_panel_settings</span>
+                                    <span>User</span>
+                                </div>
+                            </a>
+                        </li>
+
+                        <li class="menu-group  {% if tab == 'computer' %}active{% endif %}">
+                            <a href="/computer" style="text-decoration:none;color:inherit;">
+                                <div class="menu-parent">
+                                    <span class="material-symbols-rounded icon">desktop_windows</span>
+                                    Computer
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="menu-group {% if page == 'users' %}active{% endif %}">
+                <li class="menu-item">
+                    <span class="material-symbols-rounded icon">event_available</span>
+                    Appointment
+                </li>
+
+                <li class="menu-item">
+                    <span class="material-symbols-rounded icon">domain</span>
+                    Departments
+                </li>
+
+                <li class="menu-item">
+                    <span class="material-symbols-rounded icon">query_stats</span>
+
+        </aside>
+
+
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <form method="POST" class="top-search search-container">
+                    <input type="text"
+                           name="keyword"
+                           id="searchInput"
+                           placeholder="Search user..."
+                           autocomplete="off"
+                           value="{{ keyword or '' }}">
+
+                    <button type="submit">Search</button>
+
+                    <!-- DROPDOWN -->
+                    <div class="search-dropdown" id="searchDropdown">
+                        <div class="dropdown-section">
+                            <div class="dropdown-title">Tìm kiếm gần đây</div>
+                            <div id="searchHistory"></div>
+                        </div>
+
+                        <div class="dropdown-section" id="searchLoading" style="display:none;">
+                            <div class="dropdown-title">Trạng thái</div>
+                            <div class="loading-item">⏳ Đang tra cứu...</div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="profile">
+                    <span>Admin</span>
+                    <div class="avatar">A</div>
+                </div>
+            </div>
+
+
+            <!-- ================= USER TABLE ================= -->
+            {% if tab == "user" %}
+
+            <!-- STATS CARDS -->
+            <div class="cards">
+
+                <div class="card-small">
+                    <h4>Total Results</h4>
+                    <p>{{ users|length }}</p>
+                </div>
+
+                <div class="card-small">
+                    <h4>Locked Users</h4>
+                    <p>
+                        {{ users|selectattr("LockedOut")|list|length }}
+                    </p>
+                </div>
+
+                <div class="card-small">
+                    <h4>Search for</h4>
+                    <p>
+                        {{ keyword  }}
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="table-card modern-table">
+
+                <!-- HEADER -->
+                <div class="row header">
+                    <div>ID</div>
+                    <div>Name</div>
+                    <div>Description</div>
+                    <div>Status</div>
+                    <div>Email</div>
+                    <div>OU</div>
+                    <div>Action</div>
+                </div>
+
+                {% for user in users %}
+                <div class="row user-row">
+
+                    <div class="cell id">
+                        #{{ user.employeeID }}
+                    </div>
+
+                    <div class="cell name">
+                        <div class="info">
+                            <strong>{{ user.DisplayName }}</strong>
+                        </div>
+                        <span>{{ user.AccountUPN }}</span>
+                    </div>
+
+                    <div class="cell">
+                        {{ user.Description }}
+                    </div>
+
+                    <div class="cell">
+                        {% if user.LockedOut %}
+                        <span class="badge locked">Locked</span>
+                        {% else %}
+                        <span class="badge active">Active</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="cell">
+                        {% if user.Mail %}
+                        {{ user.Mail }}
+                        {% else %}
+                        <span class="sub">No mail</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="cell">
+                        {{ user.DepartmentOU }}
+                    </div>
+
+                    <div class="cell action">
+                        {% if user.LockedOut %}
+                        <button class="circle-btn unlock"
+                                onclick="confirmUnlock('{{ user.SamAccountName }}','{{ user.DisplayName }}')">
+                            🔓
+                        </button>
+                        {% else %}
+                        <span class="sub">—</span>
+                        {% endif %}
+                    </div>
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- ================= COMPUTER TABLE ================= -->
+            {% if tab == "computer" %}
+            <div id="computer-sort-box">
+
+                <span class="sort-label">
+                    <i class="fa-solid fa-arrow-down-a-z"></i> Sort
+                </span>
+
+                <select id="sort-field">
+                    <option value="status">IP Status</option>
+                    <option value="dept">Department</option>
+                    <option value="name">Name</option>
+                </select>
+
+                <button id="sort-direction-btn" onclick="toggleDirection()">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
+
+                <button onclick="applyComputerSort()">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+
+            </div>
+            <div id="computer-table" class="table-card modern-table computer-table">
+                <div class="row header">
+                    <div>Name</div>
+                    <div>Dept</div>
+                    <div>IP</div>
+                    <div>Description</div>
+                    <div>OU</div>
+                    <div>Remote</div>
+                </div>
+
+                {% for pc in computers %}
+                <div class="row user-row"
+                     data-name="{{ pc.Name }}"
+                     data-dept="{{ pc.Department }}"
+                     data-status="{{ 0 if pc.IP != 'Offline' else 1 }}">
+
+                    <!-- NAME -->
+                    <div class="cell truncate"
+                         title="{{ pc.Name }}">
+                        {{ pc.Name }}
+                    </div>
+
+                    <!-- DEPARTMENT -->
+                    <div class="cell">
+                        <span class="badge dept">
+                            {{ pc.Department }}
+                        </span>
+                    </div>
+
+                    <!-- IP -->
+                    <div class="cell ip">
+                        {{ pc.IP }}
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div class="cell truncate"
+                         title="{{ pc.Description }}">
+                        {{ pc.Description }}
+                    </div>
+
+                    <!-- OBJECT (OU cấp 3) -->
+                    <div class="cell">
+                        {{ pc.OU }}
+                    </div>
+
+                    <!-- REMOTE -->
+                    <div class="cell action">
+                        <button class="circle-btn remote-btn"
+                                onclick="openRemote('{{ pc.Name }}')">
+                            <i class="fa-solid fa-desktop"></i>
+                        </button>
+                    </div>
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+            {% endif %}
+
+
+
+        </main>
+
+    </div>
+
+
+</body>
+</html>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
