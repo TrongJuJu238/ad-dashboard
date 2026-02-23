@@ -7,13 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
 </head>
 <body>
     <div class="layout">
         <aside class="sidebar">
             <div class="logo">
                 <i class="fas fa-shield-alt" style="color: #60a5fa; font-size: 24px;"></i>
-                <span>AD Manager</span>
+                <span>AD Management</span>
             </div>
             <nav class="menu">
                 <a href="/" class="menu-item {% if tab == 'user' %}active{% endif %}">
@@ -23,6 +25,10 @@
                 <a href="/computer" class="menu-item {% if tab == 'computer' %}active{% endif %}">
                     <i class="fas fa-desktop"></i>
                     <span>Computers</span>
+                </a>
+                <a href="/task" class="menu-item {% if tab == 'task' %}active{% endif %}">
+                    <i class="fas fa-list-check"></i>
+                    <span>Tasks</span>
                 </a>
                 <div class="menu-item">
                     <i class="fas fa-history"></i>
@@ -45,11 +51,41 @@
             </header>
 
             <div class="dashboard-header">
-                <h1>{{ "User Management" if tab == 'user' else "Computer Management" }}</h1>
-                <p>Manage your Active Directory {{ tab }}s efficiently.</p>
+                <h1>{{ "User Management" if tab == 'user' else ("Computer Management" if tab == 'computer' else "Task Management") }}</h1>
+                <p>Manage your {{ 'Active Directory ' if tab != 'task' else '' }}{{ tab }}s efficiently.</p>
             </div>
 
-            <section class="stats-grid">
+            <section class="stats-grid animate-stats">
+                {% if tab == 'task' %}
+                <div class="stat-card active-tasks">
+                    <div class="stat-info">
+                        <h4>Active Tasks</h4>
+                        <p>{{ stats.active }}</p>
+                    </div>
+                    <i class="fas fa-tasks" style="color: var(--primary);"></i>
+                </div>
+                <div class="stat-card completed">
+                    <div class="stat-info">
+                        <h4>Completed</h4>
+                        <p>{{ stats.completed }}</p>
+                    </div>
+                    <i class="fas fa-check-circle" style="color: var(--accent-green);"></i>
+                </div>
+                <div class="stat-card in-progress">
+                    <div class="stat-info">
+                        <h4>In Progress</h4>
+                        <p>{{ stats.in_progress }}</p>
+                    </div>
+                    <i class="fas fa-clock" style="color: var(--accent-orange);"></i>
+                </div>
+                <div class="stat-card todo">
+                    <div class="stat-info">
+                        <h4>To Do</h4>
+                        <p>{{ stats.todo }}</p>
+                    </div>
+                    <i class="fas fa-exclamation-circle" style="color: var(--accent-red);"></i>
+                </div>
+                {% else %}
                 <div class="stat-card active-tasks">
                     <div class="stat-info">
                         <h4>Total {{ tab|capitalize }}s</h4>
@@ -73,18 +109,41 @@
                     </div>
                     <i class="fas fa-search" style="color: var(--accent-orange);"></i>
                 </div>
+                {% endif %}
             </section>
 
             <div class="content-grid">
-                <section class="panel">
+                <section class="panel animate-panel">
                     <div class="panel-header">
                         <h2>{{ tab|capitalize }} List</h2>
+
+                        {% if tab == "computer" %}
+                        <div class="sort-container">
+                            <select id="sortField" class="sort-select">
+                                <option value="Name">Name</option>
+                                <option value="Department">Department</option>
+                                <option value="IP">IP Status</option>
+<!--                                <option value="Status">Status</option>
+-->                            </select>
+
+                            <button class="sort-direction" onclick="toggleSortDirection()" id="sortDirection">
+                                ↑
+                            </button>
+
+                            <button class="btn-new-task" onclick="applyComputerSort()">
+                                Sort
+                            </button>
+                        </div>
+                        {% endif %}
+                        {% if tab == 'task' %}
+                        <button class="btn-new-task">+ New Task</button>
+                        {% endif %}
                     </div>
 
                     {% if tab == "user" %}
                     <table class="task-table">
                         <thead>
-                            <tr>
+                            <tr class="animate-row" >
                                 <th>Name / ID</th>
                                 <th>Description</th>
                                 <th>Status</th>
@@ -94,7 +153,7 @@
                         </thead>
                         <tbody>
                             {% for user in users %}
-                            <tr>
+                            <tr class="animate-row">
                                 <td>
                                     <div style="font-weight:600">{{ user.DisplayName }}</div>
                                     <div style="font-size:12px; color:var(--text-muted)">#{{ user.employeeID }}</div>
@@ -125,29 +184,64 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    {% elif tab == "task" %}
+                    <table class="task-table">
+                        <thead>
+                            <tr class="animate-row">
+                                <th>Task</th>
+                                <th>Priority</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </trclass="animate-row">
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr class="animate-row">
+                                <td style="font-weight:600">{{ task.task }}</td>
+                                <td>
+                                    <span class="badge {{ task.priority.lower() }}">{{ task.priority }}</span>
+                                </td>
+                                <td style="color: var(--text-muted)">{{ task.due_date }}</td>
+                                <td>
+                                    <span class="badge status" style="background: rgba(14, 165, 233, 0.1); color: var(--primary); border: 1px solid rgba(14, 165, 233, 0.2)">
+                                        {{ task.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <i class="fas fa-ellipsis-v" style="color: var(--text-muted); cursor: pointer"></i>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     {% else %}
                     <table class="task-table">
                         <thead>
-                            <tr>
+                            <tr class="animate-row">
                                 <th>Computer Name</th>
                                 <th>IP Address</th>
                                 <th>Department / OU</th>
+                                <th>OU</th>
                                 <th>Description</th>
                                 <th>Remote</th>
-                            </tr>
+                            </trclass="animate-row">
                         </thead>
                         <tbody>
                             {% for pc in computers %}
-                            <tr>
+                            <tr class="animate-row">
                                 <td style="font-weight:600">{{ pc.Name }}</td>
                                 <td class="ip" style="color: var(--accent-orange)">{{ pc.IP }}</td>
                                 <td>
                                     <span class="badge status">{{ pc.Department }}</span>
-                                    <div style="font-size:11px; margin-top:4px">{{ pc.OU }}</div>
+
+                                </td>
+                                <td>
+                                    <div style="font-size:11px;">{{ pc.OU }}</div>
                                 </td>
                                 <td>{{ pc.Description }}</td>
                                 <td>
-                                    <button class="btn-new-task" style="padding: 4px 8px; font-size: 12px;"
+                                    <button class="btn-new-task" style="font-size: 12px;"
                                             onclick="fetch('/remote/{{ pc.Name }}')">
                                         <i class="fas fa-desktop"></i>
                                     </button>
@@ -159,7 +253,52 @@
                     {% endif %}
                 </section>
 
-                <aside class="panel calendar-panel">
+                {% if tab == 'task' %}
+                <div class="calendar-widget animate-calendar">
+                    <div class="calendar-widget-header">
+                        <h3>Calendar</h3>
+                        <div class="calendar-widget-nav">
+
+                            <a href="{{ url_for('task_bp.task_page', month=prev_month, year=prev_year) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+
+                            <span>{{ current_month }}</span>
+
+                            <a href="{{ url_for('task_bp.task_page', month=next_month, year=next_year) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+
+                        </div>
+                    </div>
+                   
+
+                    <div class="calendar-widget-grid">
+
+                        <div class="calendar-widget-day-label">Sun</div>
+                        <div class="calendar-widget-day-label">Mon</div>
+                        <div class="calendar-widget-day-label">Tue</div>
+                        <div class="calendar-widget-day-label">Wed</div>
+                        <div class="calendar-widget-day-label">Thu</div>
+                        <div class="calendar-widget-day-label">Fri</div>
+                        <div class="calendar-widget-day-label">Sat</div>
+
+                        {# chèn ô trống đầu tháng #}
+                        {% for _ in range(first_weekday) %}
+                        <div></div>
+                        {% endfor %}
+
+                        {# render ngày #}
+                        {% for day in range(1, days_in_month + 1) %}
+                        <div class="calendar-widget-day {% if day == today %}today{% endif %}">
+                            {{ day }}
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+                {% else %}
+                <aside class="panel calendar-panel animate-system-panel">
                     <div class="calendar-header">
                         <i class="fas fa-calendar-day" style="color: var(--primary)"></i>
                         <span style="font-weight: 600;">System Overview</span>
@@ -175,26 +314,13 @@
                         </div>
                     </div>
                 </aside>
+                {% endif %}
             </div>
         </main>
     </div>
-    <script>
-        async function unlockUser(sam) {
-            const response = await fetch("/api/unlock", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sam })
-            });
-            const result = await response.json();
-            if (result.success) {
-                alert("User Unlocked Successfully");
-                location.reload();
-            } else {
-                alert("Error: " + result.error);
-            }
-        }
-    </script>
+
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>

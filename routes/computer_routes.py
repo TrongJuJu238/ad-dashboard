@@ -21,7 +21,8 @@ def computer_page():
         "index.html",
         tab="computer",
         users=[],
-        computers=computers
+        computers=computers,
+        keyword=keyword
     )
 
 

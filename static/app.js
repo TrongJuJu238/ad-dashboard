@@ -211,50 +211,175 @@ function openRemote(hostname) {
             alert("Error connecting to server");
         });
 }
+async function unlockUser(sam) {
+    const response = await fetch("/api/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sam })
+    });
+    const result = await response.json();
+    if (result.success) {
+        alert("User Unlocked Successfully");
+        location.reload();
+    } else {
+        alert("Error: " + result.error);
+    }
+}
 document.addEventListener("DOMContentLoaded", function () {
 
-    let currentDirection = "asc";
+    const select = document.getElementById("sortField");
+    const directionBtn = document.getElementById("sortDirection");
+    const table = document.querySelector(".task-table tbody");
 
-    window.toggleDirection = function () {
-        currentDirection = currentDirection === "asc" ? "desc" : "asc";
+    if (!select || !directionBtn || !table) return;
 
-        const icon = document.querySelector("#sort-direction-btn i");
-        icon.className = currentDirection === "asc"
-            ? "fa-solid fa-arrow-up"
-            : "fa-solid fa-arrow-down";
-    }
+    let sortOrder = "asc";
+
+    directionBtn.addEventListener("click", function () {
+        sortOrder = sortOrder === "asc" ? "desc" : "asc";
+        directionBtn.innerText = sortOrder === "asc" ? "↑" : "↓";
+    });
 
     window.applyComputerSort = function () {
 
-        const field = document.getElementById("sort-field").value;
-        const container = document.querySelector("#computer-table");
-
-        if (!container) {
-            console.log("Không tìm thấy computer-table");
-            return;
-        }
-
-        // Lấy tất cả row TRỪ header
-        const rows = Array.from(
-            container.querySelectorAll(".row:not(.header)")
-        );
+        const field = select.value;
+        const rows = Array.from(table.querySelectorAll("tr"));
 
         rows.sort((a, b) => {
 
-            let valA = a.getAttribute("data-" + field) || "";
-            let valB = b.getAttribute("data-" + field) || "";
+            const getText = (row, index) =>
+                row.children[index].innerText.trim();
 
-            if (!isNaN(valA) && !isNaN(valB)) {
-                valA = Number(valA);
-                valB = Number(valB);
+            // NAME
+            if (field === "Name") {
+                return compareText(getText(a, 0), getText(b, 0));
             }
 
-            if (valA < valB) return currentDirection === "asc" ? -1 : 1;
-            if (valA > valB) return currentDirection === "asc" ? 1 : -1;
+            // IP
+            if (field === "IP") {
+                return compareIP(getText(a, 1), getText(b, 1));
+            }
+
+            // Department
+            if (field === "Department") {
+                return compareText(getText(a, 2), getText(b, 2));
+            }
+
             return 0;
         });
 
-        rows.forEach(row => container.appendChild(row));
+        rows.forEach(row => table.appendChild(row));
+    };
+
+    function compareText(a, b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        return sortOrder === "asc"
+            ? a.localeCompare(b)
+            : b.localeCompare(a);
     }
 
+    function compareIP(a, b) {
+
+        const aOffline = a.toLowerCase() === "offline";
+        const bOffline = b.toLowerCase() === "offline";
+
+        // Offline luôn nằm trên cùng khi asc
+        if (aOffline && !bOffline) return sortOrder === "asc" ? -1 : 1;
+        if (!aOffline && bOffline) return sortOrder === "asc" ? 1 : -1;
+        if (aOffline && bOffline) return 0;
+
+        const aNum = ipToNumber(a);
+        const bNum = ipToNumber(b);
+
+        return sortOrder === "asc"
+            ? aNum - bNum
+            : bNum - aNum;
+    }
+
+    function ipToNumber(ip) {
+        return ip.split(".").reduce((acc, part) =>
+            (acc << 8) + parseInt(part, 10), 0);
+    }
+
+});
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Sidebar slide in
+    anime({
+        targets: '.sidebar',
+        translateX: [-60, 0],
+        opacity: [0, 1],
+        duration: 800,
+        easing: 'easeOutExpo'
+    });
+
+    // Header
+    anime({
+        targets: '.dashboard-header',
+        translateY: [-20, 0],
+        opacity: [0, 1],
+        duration: 700,
+        easing: 'easeOutQuad',
+        delay: 200
+    });
+
+    // Stats cards stagger
+    anime({
+        targets: '.stat-card',
+        translateY: [30, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(120),
+        duration: 700,
+        easing: 'easeOutCubic'
+    });
+
+    // Main panel fade
+    anime({
+        targets: '.animate-panel',
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 800,
+        easing: 'easeOutQuad',
+        delay: 300
+    });
+
+    // Table rows stagger
+    anime({
+        targets: '.animate-row',
+        opacity: [0, 1],
+        translateX: [-20, 0],
+        delay: anime.stagger(50, { start: 500 }),
+        duration: 600,
+        easing: 'easeOutQuad'
+    });
+
+    // Calendar slide from right (only task tab)
+    anime({
+        targets: '.animate-calendar',
+        opacity: [0, 1],
+        translateX: [40, 0],
+        duration: 800,
+        easing: 'easeOutCubic',
+        delay: 400
+    });
+    // System Overview panel (User/Computer tab)
+    anime({
+        targets: '.animate-system-panel',
+        opacity: [0, 1],
+        translateX: [40, 0],
+        duration: 900,
+        easing: 'easeOutCubic',
+        delay: 400
+    });
+
+    // Animate children inside system panel
+    anime({
+        targets: '.calendar-panel div[style*="Connected"]',
+        opacity: [1, 0.7],
+        direction: 'alternate',
+        loop: true,
+        easing: 'easeInOutSine',
+        duration: 1200
+    });
 });

@@ -2,6 +2,7 @@ from flask import Flask
 from config import Config
 from routes.user_routes import user_bp
 from routes.computer_routes import computer_bp
+from routes.task_routes import task_bp
 
 def create_app():
     app = Flask(__name__)
@@ -10,6 +11,7 @@ def create_app():
 
     app.register_blueprint(user_bp)
     app.register_blueprint(computer_bp)
+    app.register_blueprint(task_bp)
 
     return app
 
