@@ -1,0 +1,15 @@
+# Visual Studio
+.vs/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log

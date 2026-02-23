@@ -2,299 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AD Dashboard</title>
+    <title>AD Dashboard - AI Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-
     <div class="layout">
-
-        <!-- SIDEBAR -->
         <aside class="sidebar">
-
             <div class="logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Admin Logo">
-                <span>AD Management</span>
+                <i class="fas fa-shield-alt" style="color: #60a5fa; font-size: 24px;"></i>
+                <span>AD Manager</span>
             </div>
-            <ul class="menu">
-
-                <!-- USER MANAGEMENT -->
-                <li class="menu-group active">
-                    <div class="menu-parent">
-                        <span class="material-symbols-rounded icon">admin_panel_settings</span>
-                        <span>Management</span>
-                        <span class="material-symbols-rounded arrow">expand_more</span>
-                    </div>
-
-                    <ul class="submenu">
-                        <li class="menu-group {% if tab == 'user' %}active{% endif %}">
-                            <a href="/" style="text-decoration:none;color:inherit;">
-                                <div class="menu-parent">
-                                    <span class="material-symbols-rounded icon">admin_panel_settings</span>
-                                    <span>User</span>
-                                </div>
-                            </a>
-                        </li>
-
-                        <li class="menu-group  {% if tab == 'computer' %}active{% endif %}">
-                            <a href="/computer" style="text-decoration:none;color:inherit;">
-                                <div class="menu-parent">
-                                    <span class="material-symbols-rounded icon">desktop_windows</span>
-                                    Computer
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="menu-group {% if page == 'users' %}active{% endif %}">
-                <li class="menu-item">
-                    <span class="material-symbols-rounded icon">event_available</span>
-                    Appointment
-                </li>
-
-                <li class="menu-item">
-                    <span class="material-symbols-rounded icon">domain</span>
-                    Departments
-                </li>
-
-                <li class="menu-item">
-                    <span class="material-symbols-rounded icon">query_stats</span>
-
+            <nav class="menu">
+                <a href="/" class="menu-item {% if tab == 'user' %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Users</span>
+                </a>
+                <a href="/computer" class="menu-item {% if tab == 'computer' %}active{% endif %}">
+                    <i class="fas fa-desktop"></i>
+                    <span>Computers</span>
+                </a>
+                <div class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Logs</span>
+                </div>
+                <div class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </nav>
         </aside>
 
-
-
-        <!-- MAIN CONTENT -->
         <main class="main">
-
-            <!-- TOPBAR -->
-            <div class="topbar">
-                <form method="POST" class="top-search search-container">
-                    <input type="text"
-                           name="keyword"
-                           id="searchInput"
-                           placeholder="Search user..."
-                           autocomplete="off"
-                           value="{{ keyword or '' }}">
-
-                    <button type="submit">Search</button>
-
-                    <!-- DROPDOWN -->
-                    <div class="search-dropdown" id="searchDropdown">
-                        <div class="dropdown-section">
-                            <div class="dropdown-title">Tìm kiếm gần đây</div>
-                            <div id="searchHistory"></div>
-                        </div>
-
-                        <div class="dropdown-section" id="searchLoading" style="display:none;">
-                            <div class="dropdown-title">Trạng thái</div>
-                            <div class="loading-item">⏳ Đang tra cứu...</div>
-                        </div>
-                    </div>
+            <header class="top-nav">
+                <form method="POST" class="search-tasks">
+                    <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                    <input type="text" name="keyword" placeholder="Search AD..." value="{{ keyword or '' }}" autocomplete="off">
+                    <button type="submit" style="display:none"></button>
                 </form>
+            </header>
 
-                <div class="profile">
-                    <span>Admin</span>
-                    <div class="avatar">A</div>
-                </div>
+            <div class="dashboard-header">
+                <h1>{{ "User Management" if tab == 'user' else "Computer Management" }}</h1>
+                <p>Manage your Active Directory {{ tab }}s efficiently.</p>
             </div>
 
-
-            <!-- ================= USER TABLE ================= -->
-            {% if tab == "user" %}
-
-            <!-- STATS CARDS -->
-            <div class="cards">
-
-                <div class="card-small">
-                    <h4>Total Results</h4>
-                    <p>{{ users|length }}</p>
+            <section class="stats-grid">
+                <div class="stat-card active-tasks">
+                    <div class="stat-info">
+                        <h4>Total {{ tab|capitalize }}s</h4>
+                        <p>{{ users|length if tab == 'user' else computers|length }}</p>
+                    </div>
+                    <i class="fas fa-database" style="color: var(--primary);"></i>
                 </div>
-
-                <div class="card-small">
-                    <h4>Locked Users</h4>
-                    <p>
-                        {{ users|selectattr("LockedOut")|list|length }}
-                    </p>
+                {% if tab == 'user' %}
+                <div class="stat-card todo">
+                    <div class="stat-info">
+                        <h4>Locked Users</h4>
+                        <p>{{ users|selectattr("LockedOut")|list|length }}</p>
+                    </div>
+                    <i class="fas fa-user-lock" style="color: var(--accent-red);"></i>
                 </div>
-
-                <div class="card-small">
-                    <h4>Search for</h4>
-                    <p>
-                        {{ keyword  }}
-                    </p>
+                {% endif %}
+                <div class="stat-card in-progress">
+                    <div class="stat-info">
+                        <h4>Search Result</h4>
+                        <p>{{ keyword or 'All' }}</p>
+                    </div>
+                    <i class="fas fa-search" style="color: var(--accent-orange);"></i>
                 </div>
+            </section>
 
-            </div>
-
-            <div class="table-card modern-table">
-
-                <!-- HEADER -->
-                <div class="row header">
-                    <div>ID</div>
-                    <div>Name</div>
-                    <div>Description</div>
-                    <div>Status</div>
-                    <div>Email</div>
-                    <div>OU</div>
-                    <div>Action</div>
-                </div>
-
-                {% for user in users %}
-                <div class="row user-row">
-
-                    <div class="cell id">
-                        #{{ user.employeeID }}
+            <div class="content-grid">
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>{{ tab|capitalize }} List</h2>
                     </div>
 
-                    <div class="cell name">
-                        <div class="info">
-                            <strong>{{ user.DisplayName }}</strong>
+                    {% if tab == "user" %}
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>Name / ID</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>OU / Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div style="font-weight:600">{{ user.DisplayName }}</div>
+                                    <div style="font-size:12px; color:var(--text-muted)">#{{ user.employeeID }}</div>
+                                </td>
+                                <td>{{ user.Description }}</td>
+                                <td>
+                                    {% if user.LockedOut %}
+                                    <span class="badge high">Locked</span>
+                                    {% else %}
+                                    <span class="badge low">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="font-size:13px">{{ user.DepartmentOU }}</div>
+                                    <div style="font-size:11px; color:var(--text-muted)">{{ user.Mail or 'No Mail' }}</div>
+                                </td>
+                                <td>
+                                    {% if user.LockedOut %}
+                                    <button class="btn-new-task" style="padding: 4px 8px; font-size: 12px;"
+                                            onclick="if(confirm('Unlock {{ user.DisplayName }}?')) unlockUser('{{ user.SamAccountName }}')">
+                                        Unlock
+                                    </button>
+                                    {% else %}
+                                    <i class="fas fa-check" style="color: var(--accent-green)"></i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>Computer Name</th>
+                                <th>IP Address</th>
+                                <th>Department / OU</th>
+                                <th>Description</th>
+                                <th>Remote</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pc in computers %}
+                            <tr>
+                                <td style="font-weight:600">{{ pc.Name }}</td>
+                                <td class="ip" style="color: var(--accent-orange)">{{ pc.IP }}</td>
+                                <td>
+                                    <span class="badge status">{{ pc.Department }}</span>
+                                    <div style="font-size:11px; margin-top:4px">{{ pc.OU }}</div>
+                                </td>
+                                <td>{{ pc.Description }}</td>
+                                <td>
+                                    <button class="btn-new-task" style="padding: 4px 8px; font-size: 12px;"
+                                            onclick="fetch('/remote/{{ pc.Name }}')">
+                                        <i class="fas fa-desktop"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </section>
+
+                <aside class="panel calendar-panel">
+                    <div class="calendar-header">
+                        <i class="fas fa-calendar-day" style="color: var(--primary)"></i>
+                        <span style="font-weight: 600;">System Overview</span>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                            <div style="font-size: 12px; color: var(--text-muted)">Domain</div>
+                            <div style="font-weight: 600">htpvtg.local</div>
                         </div>
-                        <span>{{ user.AccountUPN }}</span>
+                        <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px;">
+                            <div style="font-size: 12px; color: var(--text-muted)">Status</div>
+                            <div style="font-weight: 600; color: var(--accent-green)">Connected</div>
+                        </div>
                     </div>
-
-                    <div class="cell">
-                        {{ user.Description }}
-                    </div>
-
-                    <div class="cell">
-                        {% if user.LockedOut %}
-                        <span class="badge locked">Locked</span>
-                        {% else %}
-                        <span class="badge active">Active</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="cell">
-                        {% if user.Mail %}
-                        {{ user.Mail }}
-                        {% else %}
-                        <span class="sub">No mail</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="cell">
-                        {{ user.DepartmentOU }}
-                    </div>
-
-                    <div class="cell action">
-                        {% if user.LockedOut %}
-                        <button class="circle-btn unlock"
-                                onclick="confirmUnlock('{{ user.SamAccountName }}','{{ user.DisplayName }}')">
-                            🔓
-                        </button>
-                        {% else %}
-                        <span class="sub">—</span>
-                        {% endif %}
-                    </div>
-
-                </div>
-                {% endfor %}
-
+                </aside>
             </div>
-
-            {% endif %}
-
-
-            <!-- ================= COMPUTER TABLE ================= -->
-            {% if tab == "computer" %}
-            <div id="computer-sort-box">
-
-                <span class="sort-label">
-                    <i class="fa-solid fa-arrow-down-a-z"></i> Sort
-                </span>
-
-                <select id="sort-field">
-                    <option value="status">IP Status</option>
-                    <option value="dept">Department</option>
-                    <option value="name">Name</option>
-                </select>
-
-                <button id="sort-direction-btn" onclick="toggleDirection()">
-                    <i class="fa-solid fa-arrow-up"></i>
-                </button>
-
-                <button onclick="applyComputerSort()">
-                    <i class="fa-solid fa-check"></i>
-                </button>
-
-            </div>
-            <div id="computer-table" class="table-card modern-table computer-table">
-                <div class="row header">
-                    <div>Name</div>
-                    <div>Dept</div>
-                    <div>IP</div>
-                    <div>Description</div>
-                    <div>OU</div>
-                    <div>Remote</div>
-                </div>
-
-                {% for pc in computers %}
-                <div class="row user-row"
-                     data-name="{{ pc.Name }}"
-                     data-dept="{{ pc.Department }}"
-                     data-status="{{ 0 if pc.IP != 'Offline' else 1 }}">
-
-                    <!-- NAME -->
-                    <div class="cell truncate"
-                         title="{{ pc.Name }}">
-                        {{ pc.Name }}
-                    </div>
-
-                    <!-- DEPARTMENT -->
-                    <div class="cell">
-                        <span class="badge dept">
-                            {{ pc.Department }}
-                        </span>
-                    </div>
-
-                    <!-- IP -->
-                    <div class="cell ip">
-                        {{ pc.IP }}
-                    </div>
-
-                    <!-- DESCRIPTION -->
-                    <div class="cell truncate"
-                         title="{{ pc.Description }}">
-                        {{ pc.Description }}
-                    </div>
-
-                    <!-- OBJECT (OU cấp 3) -->
-                    <div class="cell">
-                        {{ pc.OU }}
-                    </div>
-
-                    <!-- REMOTE -->
-                    <div class="cell action">
-                        <button class="circle-btn remote-btn"
-                                onclick="openRemote('{{ pc.Name }}')">
-                            <i class="fa-solid fa-desktop"></i>
-                        </button>
-                    </div>
-
-                </div>
-                {% endfor %}
-
-            </div>
-
-            {% endif %}
-
-
-
         </main>
-
     </div>
-
-
+    <script>
+        async function unlockUser(sam) {
+            const response = await fetch("/api/unlock", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sam })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("User Unlocked Successfully");
+                location.reload();
+            } else {
+                alert("Error: " + result.error);
+            }
+        }
+    </script>
 </body>
 </html>
 
