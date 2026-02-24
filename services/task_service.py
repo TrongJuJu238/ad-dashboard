@@ -26,7 +26,7 @@ def get_all_tasks():
 def add_task(task_data):
     tasks = get_all_tasks()
     task_data['id'] = max([t['id'] for t in tasks], default=0) + 1
-    tasks.append(task_data)
+    tasks.insert(0, task_data)
     with open(TASKS_FILE, "w") as f:
         json.dump(tasks, f)
     return True

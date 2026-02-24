@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>AD Dashboard - AI Planner</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+    </head>
+    <body>
+        <div class="layout">
+            <aside class="sidebar">
+                <div class="logo">
+                    <i
+                        class="fas fa-shield-alt"
+                        style="color: #60a5fa; font-size: 24px"
+                    ></i>
+                    <span>AD Manager</span>
+                </div>
+                <nav class="menu">
+                    <a
+                        href="/"
+                        class="menu-item {% if tab == 'user' %}active{% endif %}"
+                    >
+                        <i class="fas fa-user-shield"></i>
+                        <span>Users</span>
+                    </a>
+                    <a
+                        href="/computer"
+                        class="menu-item {% if tab == 'computer' %}active{% endif %}"
+                    >
+                        <i class="fas fa-desktop"></i>
+                        <span>Computers</span>
+                    </a>
+                    <a
+                        href="/task"
+                        class="menu-item {% if tab == 'task' %}active{% endif %}"
+                    >
+                        <i class="fas fa-list-check"></i>
+                        <span>Tasks</span>
+                    </a>
+                    <a
+                        href="/calendar"
+                        class="menu-item {% if tab == 'calendar' %}active{% endif %}"
+                    >
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Calendar</span>
+                    </a>
+                    <div class="menu-item">
+                        <i class="fas fa-history"></i>
+                        <span>Audit Logs</span>
+                    </div>
+                    <div class="menu-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="main">
+                <header class="top-nav">
+                    <form method="POST" class="search-tasks">
+                        <i
+                            class="fas fa-search"
+                            style="color: var(--text-muted)"
+                        ></i>
+                        <input
+                            type="text"
+                            name="keyword"
+                            placeholder="Search AD..."
+                            value="{{ keyword or '' }}"
+                            autocomplete="off"
+                        />
+                        <button type="submit" style="display: none"></button>
+                    </form>
+                </header>
+
+                <div class="dashboard-header">
+                    <h1>
+                        {{ "User Management" if tab == 'user' else ("Computer
+                        Management" if tab == 'computer' else ("Task Management"
+                        if tab == 'task' else "Calendar View")) }}
+                    </h1>
+                    <p>
+                        Manage your {{ 'Active Directory ' if tab != 'task' and
+                        tab != 'calendar' else '' }}{{ tab }}s efficiently.
+                    </p>
+                </div>
+
+                <section class="stats-grid">
+                    {% if tab == 'task' %}
+                    <div class="stat-card active-tasks">
+                        <div class="stat-info">
+                            <h4>Active Tasks</h4>
+                            <p>{{ stats.active }}</p>
+                        </div>
+                        <i
+                            class="fas fa-tasks"
+                            style="color: var(--primary)"
+                        ></i>
+                    </div>
+                    <div class="stat-card completed">
+                        <div class="stat-info">
+                            <h4>Completed</h4>
+                            <p>{{ stats.completed }}</p>
+                        </div>
+                        <i
+                            class="fas fa-check-circle"
+                            style="color: var(--accent-green)"
+                        ></i>
+                    </div>
+                    <div class="stat-card in-progress">
+                        <div class="stat-info">
+                            <h4>In Progress</h4>
+                            <p>{{ stats.in_progress }}</p>
+                        </div>
+                        <i
+                            class="fas fa-clock"
+                            style="color: var(--accent-orange)"
+                        ></i>
+                    </div>
+                    <div class="stat-card todo">
+                        <div class="stat-info">
+                            <h4>To Do</h4>
+                            <p>{{ stats.todo }}</p>
+                        </div>
+                        <i
+                            class="fas fa-exclamation-circle"
+                            style="color: var(--accent-red)"
+                        ></i>
+                    </div>
+                    {% else %}
+                    <div class="stat-card active-tasks">
+                        <div class="stat-info">
+                            <h4>Total {{ tab|capitalize }}s</h4>
+                            <p>
+                                {{ users|length if tab == 'user' else
+                                computers|length }}
+                            </p>
+                        </div>
+                        <i
+                            class="fas fa-database"
+                            style="color: var(--primary)"
+                        ></i>
+                    </div>
+                    {% if tab == 'user' %}
+                    <div class="stat-card todo">
+                        <div class="stat-info">
+                            <h4>Locked Users</h4>
+                            <p>
+                                {{ users|selectattr("LockedOut")|list|length }}
+                            </p>
+                        </div>
+                        <i
+                            class="fas fa-user-lock"
+                            style="color: var(--accent-red)"
+                        ></i>
+                    </div>
+                    {% endif %}
+                    <div class="stat-card in-progress">
+                        <div class="stat-info">
+                            <h4>Search Result</h4>
+                            <p>{{ keyword or 'All' }}</p>
+                        </div>
+                        <i
+                            class="fas fa-search"
+                            style="color: var(--accent-orange)"
+                        ></i>
+                    </div>
+                    {% endif %}
+                </section>
+
+                <div class="content-grid">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <h2>{{ tab|capitalize }} List</h2>
+                            {% if tab == 'task' %}
+                            <button
+                                class="btn-new-task"
+                                onclick="document.getElementById('taskModal').style.display='flex'"
+                            >
+                                + New Task
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        {% if tab == "user" %}
+                        <table class="task-table">
+                            <thead>
+                                <tr>
+                                    <th>Name / ID</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>OU / Email</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600">
+                                            {{ user.DisplayName }}
+                                        </div>
+                                        <div
+                                            style="
+                                                font-size: 12px;
+                                                color: var(--text-muted);
+                                            "
+                                        >
+                                            #{{ user.employeeID }}
+                                        </div>
+                                    </td>
+                                    <td>{{ user.Description }}</td>
+                                    <td>
+                                        {% if user.LockedOut %}
+                                        <span class="badge high">Locked</span>
+                                        {% else %}
+                                        <span class="badge low">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 13px">
+                                            {{ user.DepartmentOU }}
+                                        </div>
+                                        <div
+                                            style="
+                                                font-size: 11px;
+                                                color: var(--text-muted);
+                                            "
+                                        >
+                                            {{ user.Mail or 'No Mail' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.LockedOut %}
+                                        <button
+                                            class="btn-new-task"
+                                            style="
+                                                padding: 4px 8px;
+                                                font-size: 12px;
+                                            "
+                                            onclick="if(confirm('Unlock {{ user.DisplayName }}?')) unlockUser('{{ user.SamAccountName }}')"
+                                        >
+                                            Unlock
+                                        </button>
+                                        {% else %}
+                                        <i
+                                            class="fas fa-check"
+                                            style="color: var(--accent-green)"
+                                        ></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% elif tab == "task" %}
+                        <table class="task-table">
+                            <thead>
+                                <tr>
+                                    <th>Task / EID</th>
+                                    <th>Staff / Dept</th>
+                                    <th>EXT / Note</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600">
+                                            {{ task.task }}
+                                        </div>
+                                        <div
+                                            style="
+                                                font-size: 12px;
+                                                color: var(--text-muted);
+                                            "
+                                        >
+                                            EID: {{ task.eid or '-' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>{{ task.name or '-' }}</div>
+                                        <div
+                                            style="
+                                                font-size: 12px;
+                                                color: var(--text-muted);
+                                            "
+                                        >
+                                            {{ task.dept or '-' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>EXT: {{ task.ext or '-' }}</div>
+                                        <div
+                                            style="
+                                                font-size: 11px;
+                                                color: var(--text-muted);
+                                            "
+                                        >
+                                            {{ task.note or '-' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select
+                                            class="task-select badge {{ task.priority.lower() }}"
+                                            onchange="updateTask('{{ task.id }}', 'priority', this.value)"
+                                        >
+                                            <option
+                                                value="High"
+                                                {%
+                                                if
+                                                task.priority=""
+                                                ="High"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                High
+                                            </option>
+                                            <option
+                                                value="Medium"
+                                                {%
+                                                if
+                                                task.priority=""
+                                                ="Medium"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                Medium
+                                            </option>
+                                            <option
+                                                value="Low"
+                                                {%
+                                                if
+                                                task.priority=""
+                                                ="Low"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                Low
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select
+                                            class="task-select badge status"
+                                            style="
+                                                background: rgba(
+                                                    14,
+                                                    165,
+                                                    233,
+                                                    0.1
+                                                );
+                                                color: var(--primary);
+                                                border: 1px solid
+                                                    rgba(14, 165, 233, 0.2);
+                                            "
+                                            onchange="updateTask('{{ task.id }}', 'status', this.value)"
+                                        >
+                                            <option
+                                                value="Todo"
+                                                {%
+                                                if
+                                                task.status=""
+                                                ="Todo"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                Todo
+                                            </option>
+                                            <option
+                                                value="In Progress"
+                                                {%
+                                                if
+                                                task.status=""
+                                                ="In Progress"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                In Progress
+                                            </option>
+                                            <option
+                                                value="Done"
+                                                {%
+                                                if
+                                                task.status=""
+                                                ="Done"
+                                                %}selected{%
+                                                endif
+                                                %}
+                                            >
+                                                Done
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <i
+                                            class="fas fa-ellipsis-v"
+                                            style="
+                                                color: var(--text-muted);
+                                                cursor: pointer;
+                                            "
+                                        ></i>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% elif tab == "calendar" %}
+                        <div class="calendar-full-view">
+                            <div class="calendar-header-main">
+                                <div class="calendar-info">
+                                    <h2 id="currentMonthYear"></h2>
+                                    <div
+                                        style="
+                                            margin-top: 10px;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 15px;
+                                        "
+                                    >
+                                        <p style="margin: 0">Staff:</p>
+                                        <select
+                                            id="staffSelect"
+                                            onchange="loadCalendarEvents()"
+                                            style="
+                                                background: var(--card-bg);
+                                                color: var(--text-main);
+                                                border: 1px solid var(--border);
+                                                padding: 5px 10px;
+                                                border-radius: 8px;
+                                                outline: none;
+                                            "
+                                        >
+                                            <option value="PHAN HUU TRONG">
+                                                PHAN HUU TRONG
+                                            </option>
+                                            <option value="NGUYEN VAN A">
+                                                NGUYEN VAN A
+                                            </option>
+                                            <option value="TRAN THI B">
+                                                TRAN THI B
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div
+                                    class="calendar-controls"
+                                    style="
+                                        display: flex;
+                                        gap: 15px;
+                                        align-items: center;
+                                    "
+                                >
+                                    <div
+                                        class="shift-palette"
+                                        style="display: flex; gap: 8px"
+                                    >
+                                        <div
+                                            class="shift-tag shift-a"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="A"
+                                        >
+                                            A
+                                        </div>
+                                        <div
+                                            class="shift-tag shift-p"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="P"
+                                        >
+                                            P
+                                        </div>
+                                        <div
+                                            class="shift-tag shift-m"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="M"
+                                        >
+                                            M
+                                        </div>
+                                        <div
+                                            class="shift-tag shift-o"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="O"
+                                        >
+                                            O
+                                        </div>
+                                        <div
+                                            class="shift-tag shift-off"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="OFF"
+                                        >
+                                            OFF
+                                        </div>
+                                        <div
+                                            class="shift-tag shift-al"
+                                            draggable="true"
+                                            ondragstart="drag(event)"
+                                            data-shift="AL"
+                                        >
+                                            AL
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="calendar-nav"
+                                        style="display: flex; gap: 10px"
+                                    >
+                                        <button
+                                            class="btn-new-task"
+                                            onclick="changeMonth(-1)"
+                                        >
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <button
+                                            class="btn-new-task"
+                                            onclick="changeMonth(1)"
+                                        >
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="calendar-grid-large" id="calendarGrid">
+                                <div class="day-name">Sunday</div>
+                                <div class="day-name">Monday</div>
+                                <div class="day-name">Tuesday</div>
+                                <div class="day-name">Wednesday</div>
+                                <div class="day-name">Thursday</div>
+                                <div class="day-name">Friday</div>
+                                <div class="day-name">Saturday</div>
+                                <!-- Cells injected by JS -->
+                            </div>
+                        </div>
+                        {% else %}
+                        <table class="task-table">
+                            <thead>
+                                <tr>
+                                    <th>Computer Name</th>
+                                    <th>IP Address</th>
+                                    <th>Department / OU</th>
+                                    <th>Description</th>
+                                    <th>Remote</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pc in computers %}
+                                <tr>
+                                    <td style="font-weight: 600">
+                                        {{ pc.Name }}
+                                    </td>
+                                    <td
+                                        class="ip"
+                                        style="color: var(--accent-orange)"
+                                    >
+                                        {{ pc.IP }}
+                                    </td>
+                                    <td>
+                                        <span class="badge status"
+                                            >{{ pc.Department }}</span
+                                        >
+                                        <div
+                                            style="
+                                                font-size: 11px;
+                                                margin-top: 4px;
+                                            "
+                                        >
+                                            {{ pc.OU }}
+                                        </div>
+                                    </td>
+                                    <td>{{ pc.Description }}</td>
+                                    <td>
+                                        <button
+                                            class="btn-new-task"
+                                            style="
+                                                padding: 4px 8px;
+                                                font-size: 12px;
+                                            "
+                                            onclick="fetch('/remote/{{ pc.Name }}')"
+                                        >
+                                            <i class="fas fa-desktop"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% endif %}
+                    </section>
+
+                    {% if tab == 'task' %}
+                    <div class="calendar-widget">
+                        <div class="calendar-widget-header">
+                            <h3>Calendar</h3>
+                            <div class="calendar-widget-nav">
+                                <i class="fas fa-chevron-left"></i>
+                                <span>February 2026</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        <div class="calendar-widget-grid">
+                            <div class="calendar-widget-day-label">Sun</div>
+                            <div class="calendar-widget-day-label">Mon</div>
+                            <div class="calendar-widget-day-label">Tue</div>
+                            <div class="calendar-widget-day-label">Wed</div>
+                            <div class="calendar-widget-day-label">Thu</div>
+                            <div class="calendar-widget-day-label">Fri</div>
+                            <div class="calendar-widget-day-label">Sat</div>
+
+                            <div class="calendar-widget-day">1</div>
+                            <div class="calendar-widget-day">2</div>
+                            <div class="calendar-widget-day">3</div>
+                            <div class="calendar-widget-day">4</div>
+                            <div class="calendar-widget-day">5</div>
+                            <div class="calendar-widget-day">6</div>
+                            <div class="calendar-widget-day">7</div>
+                            <div class="calendar-widget-day">8</div>
+                            <div class="calendar-widget-day">9</div>
+                            <div class="calendar-widget-day">10</div>
+                            <div class="calendar-widget-day">11</div>
+                            <div class="calendar-widget-day">12</div>
+                            <div class="calendar-widget-day">13</div>
+                            <div class="calendar-widget-day">14</div>
+                            <div class="calendar-widget-day">15</div>
+                            <div class="calendar-widget-day">16</div>
+                            <div class="calendar-widget-day">17</div>
+                            <div class="calendar-widget-day">18</div>
+                            <div class="calendar-widget-day">19</div>
+                            <div class="calendar-widget-day">20</div>
+                            <div class="calendar-widget-day">21</div>
+                            <div class="calendar-widget-day">22</div>
+                            <div class="calendar-widget-day">23</div>
+                            <div class="calendar-widget-day today">24</div>
+                            <div class="calendar-widget-day">25</div>
+                            <div class="calendar-widget-day">26</div>
+                            <div class="calendar-widget-day">27</div>
+                            <div class="calendar-widget-day">28</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <aside class="panel calendar-panel">
+                        <div class="calendar-header">
+                            <i
+                                class="fas fa-calendar-day"
+                                style="color: var(--primary)"
+                            ></i>
+                            <span style="font-weight: 600"
+                                >System Overview</span
+                            >
+                        </div>
+                        <div style="margin-top: 20px">
+                            <div
+                                style="
+                                    background: rgba(255, 255, 255, 0.03);
+                                    padding: 15px;
+                                    border-radius: 12px;
+                                    margin-bottom: 10px;
+                                "
+                            >
+                                <div
+                                    style="
+                                        font-size: 12px;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    Domain
+                                </div>
+                                <div style="font-weight: 600">htpvtg.local</div>
+                            </div>
+                            <div
+                                style="
+                                    background: rgba(255, 255, 255, 0.03);
+                                    padding: 15px;
+                                    border-radius: 12px;
+                                "
+                            >
+                                <div
+                                    style="
+                                        font-size: 12px;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    Status
+                                </div>
+                                <div
+                                    style="
+                                        font-weight: 600;
+                                        color: var(--accent-green);
+                                    "
+                                >
+                                    Connected
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+        <script>
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+            let calendarData = {};
+
+            function drag(ev) {
+                ev.dataTransfer.setData(
+                    "shift",
+                    ev.target.getAttribute("data-shift"),
+                );
+            }
+
+            function allowDrop(ev) {
+                ev.preventDefault();
+            }
+
+            async function drop(ev) {
+                ev.preventDefault();
+                const shift = ev.dataTransfer.getData("shift");
+                const date = ev.target
+                    .closest(".calendar-cell")
+                    .getAttribute("data-date");
+                const staff = document.getElementById("staffSelect").value;
+
+                const response = await fetch("/api/calendar/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date, shift, staff }),
+                });
+
+                if ((await response.json()).success) {
+                    renderCalendar();
+                }
+            }
+
+            async function loadCalendarEvents() {
+                const staff = document.getElementById("staffSelect").value;
+                const response = await fetch(
+                    `/api/calendar/load?staff=${staff}`,
+                );
+                calendarData = await response.json();
+                renderCalendar();
+            }
+
+            function changeMonth(delta) {
+                currentMonth += delta;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar();
+            }
+
+            function renderCalendar() {
+                const grid = document.getElementById("calendarGrid");
+                if (!grid) return;
+
+                const monthNames = [
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ];
+                document.getElementById("currentMonthYear").innerText =
+                    `${monthNames[currentMonth]} ${currentYear}`;
+
+                // Clear cells except headers
+                const headers = Array.from(grid.querySelectorAll(".day-name"));
+                grid.innerHTML = "";
+                headers.forEach((h) => grid.appendChild(h));
+
+                const firstDay = new Date(
+                    currentYear,
+                    currentMonth,
+                    1,
+                ).getDay();
+                const daysInMonth = new Date(
+                    currentYear,
+                    currentMonth + 1,
+                    0,
+                ).getDate();
+
+                // Padding
+                for (let i = 0; i < firstDay; i++) {
+                    const empty = document.createElement("div");
+                    empty.className = "calendar-cell empty";
+                    grid.appendChild(empty);
+                }
+
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const cell = document.createElement("div");
+                    cell.className = "calendar-cell";
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
+                    cell.setAttribute("data-date", dateStr);
+                    cell.ondrop = drop;
+                    cell.ondragover = allowDrop;
+
+                    const dayNum = document.createElement("span");
+                    dayNum.className = "day-num";
+                    dayNum.innerText = i;
+                    cell.appendChild(dayNum);
+
+                    if (calendarData[dateStr]) {
+                        const tag = document.createElement("div");
+                        tag.className = `shift-tag shift-${calendarData[dateStr].toLowerCase()}`;
+                        tag.innerText = calendarData[dateStr];
+                        cell.appendChild(tag);
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                if (window.location.pathname === "/calendar") {
+                    loadCalendarEvents();
+                }
+            });
+
+            async function updateTask(id, field, value) {
+                const response = await fetch("/task/update", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id, field, value }),
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log("Task updated");
+                } else {
+                    alert("Update failed");
+                }
+            }
+
+            async function unlockUser(sam) {
+                const response = await fetch("/api/unlock", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sam }),
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert("User Unlocked Successfully");
+                    location.reload();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            }
+        </script>
+        <!-- Task Modal -->
+        <div id="taskModal" class="modal-overlay" style="display: none">
+            <div class="modal-content panel">
+                <div class="panel-header">
+                    <h2>New Call Task</h2>
+                    <i
+                        class="fas fa-times"
+                        style="cursor: pointer"
+                        onclick="document.getElementById('taskModal').style.display='none'"
+                    ></i>
+                </div>
+                <form method="POST" action="/task">
+                    <div class="form-group">
+                        <label>EID</label>
+                        <input
+                            type="text"
+                            name="eid"
+                            placeholder="Employee ID"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Staff Name"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input
+                            type="text"
+                            name="dept"
+                            placeholder="Department"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>EXT</label>
+                        <input type="text" name="ext" placeholder="Extension" />
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea
+                            name="description"
+                            placeholder="Call Description"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Note</label>
+                        <textarea
+                            name="note"
+                            placeholder="Additional Notes"
+                        ></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px">
+                        <button
+                            type="submit"
+                            class="btn-new-task"
+                            style="flex: 1"
+                        >
+                            Save Task
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-new-task"
+                            style="flex: 1; background: var(--border)"
+                            onclick="document.getElementById('taskModal').style.display='none'"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>

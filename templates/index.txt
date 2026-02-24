@@ -34,7 +34,6 @@
                     <i class="fas fa-calendar-alt"></i>
                     <span>Calendar</span>
                 </a>
-
                 <div class="menu-item">
                     <i class="fas fa-history"></i>
                     <span>Audit Logs</span>
@@ -129,11 +128,11 @@
                                 <option value="Department">Department</option>
                                 <option value="IP">IP Status</option>
                                 <!--                                <option value="Status">Status</option>
-                                -->
+            -->
                             </select>
 
                             <button class="sort-direction" onclick="toggleSortDirection()" id="sortDirection">
-                                ↑
+                                ?
                             </button>
 
                             <button class="btn-new-task" onclick="applyComputerSort()">
@@ -149,7 +148,7 @@
                     {% if tab == "user" %}
                     <table class="task-table">
                         <thead>
-                            <tr class="animate-row">
+                            <tr class="animate-row" >
                                 <th>Name / ID</th>
                                 <th>Description</th>
                                 <th>Status</th>
@@ -194,42 +193,25 @@
                     <table class="task-table">
                         <thead>
                             <tr class="animate-row">
-                                <th>Task / EID</th>
-                                <th>Staff / Dept</th>
-                                <th>EXT / Note</th>
+                                <th>Task</th>
                                 <th>Priority</th>
+                                <th>Due Date</th>
                                 <th>Status</th>
                                 <th>Action</th>
-                                </trclass="animate-row">
+                            </trclass="animate-row">
                         </thead>
                         <tbody>
                             {% for task in tasks %}
                             <tr class="animate-row">
+                                <td style="font-weight:600">{{ task.task }}</td>
                                 <td>
-                                    <div style="font-weight:600">{{ task.task }}</div>
-                                    <div style="font-size:12px; color:var(--text-muted)">EID: {{ task.eid or '-' }}</div>
+                                    <span class="badge {{ task.priority.lower() }}">{{ task.priority }}</span>
                                 </td>
+                                <td style="color: var(--text-muted)">{{ task.due_date }}</td>
                                 <td>
-                                    <div>{{ task.name or '-' }}</div>
-                                    <div style="font-size:12px; color:var(--text-muted)">{{ task.dept or '-' }}</div>
-                                </td>
-                                <td>
-                                    <div>EXT: {{ task.ext or '-' }}</div>
-                                    <div style="font-size:11px; color:var(--text-muted)">{{ task.note or '-' }}</div>
-                                </td>
-                                <td>
-                                    <select class="task-select badge {{ task.priority.lower() }}" onchange="updateTask('{{ task.id }}', 'priority', this.value)">
-                                        <option value="High" {% if task.priority =='High' %}selected{% endif %}>High</option>
-                                        <option value="Medium" {% if task.priority=='Medium' %}selected{% endif %}>Medium</option>
-                                        <option value="Low" {% if task.priority=='Low' %}selected{% endif %}>Low</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select class="task-select badge status" style="background: rgba(14, 165, 233, 0.1); color: var(--primary); border: 1px solid rgba(14, 165, 233, 0.2)" onchange="updateTask('{{ task.id }}', 'status', this.value)">
-                                        <option value="Todo" {% if task.status=='Todo' %}selected{% endif %}>Todo</option>
-                                        <option value="In Progress" {% if task.status=='In Progress' %}selected{% endif %}>In Progress</option>
-                                        <option value="Done" {% if task.status=='Done' %}selected{% endif %}>Done</option>
-                                    </select>
+                                    <span class="badge status" style="background: rgba(14, 165, 233, 0.1); color: var(--primary); border: 1px solid rgba(14, 165, 233, 0.2)">
+                                        {{ task.status }}
+                                    </span>
                                 </td>
                                 <td>
                                     <i class="fas fa-ellipsis-v" style="color: var(--text-muted); cursor: pointer"></i>
@@ -238,56 +220,6 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% elif tab == "calendar" %}
-                    <div class="calendar-full-view">
-                        <div class="calendar-header-main">
-                            <div class="calendar-info">
-                                <h2 id="currentMonthYear"></h2>
-
-                                <div style="margin-top: 10px; display: flex; align-items: center; gap: 15px;">
-                                    <p style="margin:0">Staff:</p>
-                                    <select id="staffSelect" onchange="loadCalendarEvents()" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; outline: none;">
-                                        <option value="PHAN HUU TRONG">PHAN HUU TRONG</option>
-                                        <option value="NGUYEN VAN A">NGUYEN VAN A</option>
-                                        <option value="TRAN THI B">TRAN THI B</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="calendar-controls" style="display: flex; gap: 15px; align-items: center;">
-                                <div class="shift-palette" style="display: flex; gap: 8px;">
-                                    <div class="shift-tag shift-a" draggable="true" ondragstart="drag(event)" data-shift="A">A</div>
-                                    <div class="shift-tag shift-p" draggable="true" ondragstart="drag(event)" data-shift="P">P</div>
-                                    <div class="shift-tag shift-m" draggable="true" ondragstart="drag(event)" data-shift="M">M</div>
-                                    <div class="shift-tag shift-o" draggable="true" ondragstart="drag(event)" data-shift="O">O</div>
-                                    <div class="shift-tag shift-off" draggable="true" ondragstart="drag(event)" data-shift="OFF">OFF</div>
-                                    <div class="shift-tag shift-al" draggable="true" ondragstart="drag(event)" data-shift="AL">AL</div>
-                                </div>
-                                <div class="calendar-nav" style="display: flex; gap: 10px;">
-                                    <button class="btn-new-task" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                                    <button class="btn-new-task" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="calendar-grid-large" id="calendarGrid">
-                            <div class="day-name">Sunday</div><div class="day-name">Monday</div><div class="day-name">Tuesday</div>
-                            <div class="day-name">Wednesday</div><div class="day-name">Thursday</div><div class="day-name">Friday</div>
-                            <div class="day-name">Saturday</div>
-
-                            {% for day in range(1, 29) %}
-                            {% set date_str = "2026-02-" ~ "%02d"|format(day) %}
-                            {% set shift = roster.schedule.get(date_str) if roster else None %}
-                            <div class="calendar-cell {% if day == 24 %}today{% endif %}">
-                                <span class="day-num">{{ day }}</span>
-                                {% if shift %}
-                                <div class="shift-tag shift-{{ shift|lower }}">
-                                    {{ shift }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
                     {% else %}
                     <table class="task-table">
                         <thead>
@@ -298,7 +230,7 @@
                                 <th>OU</th>
                                 <th>Description</th>
                                 <th>Remote</th>
-                                </trclass="animate-row">
+                            </trclass="animate-row">
                         </thead>
                         <tbody>
                             {% for pc in computers %}
@@ -344,7 +276,7 @@
 
                         </div>
                     </div>
-
+                   
 
                     <div class="calendar-widget-grid">
 
@@ -356,12 +288,12 @@
                         <div class="calendar-widget-day-label">Fri</div>
                         <div class="calendar-widget-day-label">Sat</div>
 
-                        {# chèn ô trống đầu tháng #}
+                        {# ch�n � tr?ng ??u th�ng #}
                         {% for _ in range(first_weekday) %}
                         <div></div>
                         {% endfor %}
 
-                        {# render ngày #}
+                        {# render ng�y #}
                         {% for day in range(1, days_in_month + 1) %}
                         <div class="calendar-widget-day {% if day == today %}today{% endif %}">
                             {{ day }}
@@ -389,68 +321,11 @@
                 </aside>
                 {% endif %}
             </div>
-
         </main>
     </div>
 
-    <!-- Task Modal -->
-    <div id="taskModal" class="modal-overlay" style="display: none">
-        <div class="modal-content panel">
-            <div class="panel-header">
-                <h2>New Call Task</h2>
-                <i class="fas fa-times"
-                   style="cursor: pointer"
-                   onclick="document.getElementById('taskModal').style.display='none'"></i>
-            </div>
-            <form method="POST" action="/task">
-                <div class="form-group">
-                    <label>EID</label>
-                    <input type="text"
-                           name="eid"
-                           placeholder="Employee ID" />
-                </div>
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text"
-                           name="name"
-                           placeholder="Staff Name" />
-                </div>
-                <div class="form-group">
-                    <label>Department</label>
-                    <input type="text"
-                           name="dept"
-                           placeholder="Department" />
-                </div>
-                <div class="form-group">
-                    <label>EXT</label>
-                    <input type="text" name="ext" placeholder="Extension" />
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="description"
-                              placeholder="Call Description"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Note</label>
-                    <textarea name="note"
-                              placeholder="Additional Notes"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px">
-                    <button type="submit"
-                            class="btn-new-task"
-                            style="flex: 1">
-                        Save Task
-                    </button>
-                    <button type="button"
-                            class="btn-new-task"
-                            style="flex: 1; background: var(--border)"
-                            onclick="document.getElementById('taskModal').style.display='none'">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
+

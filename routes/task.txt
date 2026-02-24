@@ -1,4 +1,4 @@
-ï»¿from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for
 from services.task_service import get_all_tasks, add_task
 from datetime import datetime
 import calendar
@@ -8,24 +8,36 @@ task_bp = Blueprint("task_bp", __name__)
 def task_page():
 
     if request.method == "POST":
-        data = request.form
+        pass
 
-        new_task = {
-            "task": data.get("description", "New Call"),
-            "eid": data.get("eid"),
-            "name": data.get("name"),
-            "dept": data.get("dept"),
-            "ext": data.get("ext"),
-            "note": data.get("note"),
-            "priority": data.get("priority", "Medium"),
-            "due_date": data.get("due_date"),
-            "status": data.get("status", "Todo")
-        }
+    # L?y tháng/n?m t? query param
+    year = request.args.get("year", type=int)
+    month = request.args.get("month", type=int)
 
-        add_task(new_task)
-        return redirect(url_for("task_bp.task_page"))
+    now = datetime.now()
 
-    # ===== GET LOGIC =====
+    # N?u ch?a có param ? dùng tháng hi?n t?i
+    if not year:
+        year = now.year
+    if not month:
+        month = now.month
+
+    # Thông tin tháng
+    first_weekday, days_in_month = calendar.monthrange(year, month)
+
+    # Previous month
+    prev_month = month - 1
+    prev_year = year
+    if prev_month == 0:
+        prev_month = 12
+        prev_year -= 1
+
+    # Next month
+    next_month = month + 1
+    next_year = year
+    if next_month == 13:
+        next_month = 1
+        next_year += 1
 
     tasks = get_all_tasks()
 
@@ -35,21 +47,6 @@ def task_page():
         "in_progress": len([t for t in tasks if t['status'] == 'In Progress']),
         "todo": len([t for t in tasks if t['status'] == 'Todo'])
     }
-
-    now = datetime.now()
-
-    year = request.args.get("year", type=int) or now.year
-    month = request.args.get("month", type=int) or now.month
-
-    first_weekday, days_in_month = calendar.monthrange(year, month)
-
-    # Previous
-    prev_month = month - 1 or 12
-    prev_year = year - 1 if month == 1 else year
-
-    # Next
-    next_month = month + 1 if month < 12 else 1
-    next_year = year + 1 if month == 12 else year
 
     return render_template(
         "index.html",
