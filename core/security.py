@@ -11,7 +11,6 @@ def ldap_escape(value: str) -> str:
         value = value.replace(k, v)
     return value
 
-
 def build_ldap_filter(keyword: str):
 
     if not keyword:
@@ -19,4 +18,4 @@ def build_ldap_filter(keyword: str):
 
     kw = ldap_escape(keyword)
 
-    return f"(&(objectCategory=person)(objectClass=user)(|(displayName=*{kw}*)(name=*{kw}*)(sAMAccountName=*{kw}*)(userPrincipalName=*{kw}*)(mail=*{kw}*)(employeeID=*{kw}*)))"
+    return f"(&(objectCategory=person)(objectClass=user)(|(displayName=*{kw}*)(name=*{kw}*)(sAMAccountName=*{kw}*)(userPrincipalName=*{kw}*)(mail=*{kw}*)(employeeID=*{kw}*)(description=*{kw}*)))"

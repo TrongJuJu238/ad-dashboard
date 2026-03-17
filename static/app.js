@@ -1,4 +1,6 @@
-﻿async function searchComputers() {
+﻿
+
+async function searchComputers() {
 
     const keyword = document.getElementById("computerSearchInput").value;
 
@@ -540,4 +542,166 @@ async function unlockUser(sam) {
     } else {
         alert("Error: " + result.error);
     }
+}
+window.applyUserFilter = function () {
+
+    const filter = document.getElementById("userFilter").value;
+    const rows = document.querySelectorAll("#userTable tbody tr");
+
+    rows.forEach(row => {
+
+        const status = row.children[2].innerText.toLowerCase();
+        const ou = row.children[3].innerText.toLowerCase();
+
+        let show = true;
+
+        if (filter === "active") {
+            show = !ou.includes("terminated");
+        }
+
+        if (filter === "locked") {
+            show = status.includes("locked");
+        }
+
+        if (filter === "terminated") {
+            show = ou.includes("terminated");
+        }
+
+        if (filter === "all") {
+            show = true;
+        }
+
+        row.style.display = show ? "" : "none";
+
+    });
+
+};
+window.showGroups = function (username) {
+
+    console.log("Loading groups for:", username);
+
+    fetch("/user-groups/" + username)
+        .then(res => res.json())
+        .then(data => {
+
+            console.log("API DATA:", data);
+
+            const container = document.getElementById("groupList");
+
+            if (!container) {
+                console.error("groupList container not found");
+                return;
+            }
+
+            container.innerHTML = "";
+
+            if (!data.groups || data.groups.length === 0) {
+                container.innerHTML = "<div>No groups found</div>";
+            } else {
+
+                data.groups.forEach(g => {
+
+                    const div = document.createElement("div");
+                    div.textContent = g;
+                    div.style.padding = "6px";
+                    div.style.borderBottom = "1px solid var(--border)";
+
+                    container.appendChild(div);
+
+                });
+
+            }
+
+            document.getElementById("groupModal").style.display = "flex";
+
+        })
+        .catch(err => {
+            console.error("FETCH ERROR:", err);
+        });
+
+}
+
+window.closeGroupModal = function () {
+    document.getElementById("groupModal").style.display = "none";
+}
+let compareUsers = [];
+
+window.selectCompareUser = function (username) {
+
+    compareUsers.push(username);
+
+    if (compareUsers.length === 2) {
+
+        window.location = "/compare-groups/" + compareUsers[0] + "/" + compareUsers[1];
+
+    }
+
+}
+
+
+let compareUser = null;
+
+window.compareUserGroups = function (username, btn) {
+
+    if (compareUser === null) {
+
+        compareUser = username;
+
+        document.body.classList.add("compare-mode");
+
+        btn.classList.add("compare-selected");
+
+    } else {
+
+        const userA = compareUser;
+        const userB = username;
+
+        compareUser = null;
+
+        document.body.classList.remove("compare-mode");
+
+        document.querySelectorAll(".compare-btn")
+            .forEach(b => b.classList.remove("compare-selected"));
+
+        openCompareModal(userA, userB);
+
+    }
+
+}
+function openCompareModal(u1, u2) {
+
+    fetch(`/compare-groups/${u1}/${u2}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const table = document.getElementById("compareTable");
+
+            table.innerHTML = "";
+
+            data.forEach(row => {
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+            <td>${row.group}</td>
+            <td>${row.user1 ? "✔" : ""}</td>
+            <td>${row.user2 ? "✔" : ""}</td>
+            `;
+
+                table.appendChild(tr);
+
+            });
+
+            document.getElementById("compareUserA").textContent = u1;
+            document.getElementById("compareUserB").textContent = u2;
+
+            document.getElementById("compareModal").style.display = "flex";
+
+        });
+
+}
+function closeCompare() {
+
+    document.getElementById("compareModal").style.display = "none";
+
 }

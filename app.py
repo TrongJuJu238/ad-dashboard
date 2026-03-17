@@ -17,7 +17,22 @@ def create_app():
     return app
 
 app = create_app()
+@app.route("/user-groups/<username>")
+def user_groups(username):
 
+    user = conn.search(
+        "dc=htpvtg,dc=local",
+        f"(sAMAccountName={username})",
+        attributes=["memberOf"]
+    )
+
+    groups = []
+
+    if conn.entries:
+        for g in conn.entries[0].memberOf:
+            groups.append(str(g).split(",")[0].replace("CN=",""))
+
+    return jsonify({"groups": groups})
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",

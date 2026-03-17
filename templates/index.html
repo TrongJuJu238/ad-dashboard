@@ -121,7 +121,20 @@
                 <section class="panel animate-panel">
                     <div class="panel-header">
                         <h2>{{ tab|capitalize }} List</h2>
+                        {% if tab == "user" %}
+                        <div class="sort-container">
+                            <select id="userFilter" class="sort-select">
+                                <option value="all">All Users</option>
+                                <option value="active">Active</option>
+                                <option value="locked">Locked</option>
+                                <option value="terminated">Terminated</option>
+                            </select>
 
+                            <button class="btn-new-task" onclick="applyUserFilter()">
+                                Filter
+                            </button>
+                        </div>
+                        {% endif %}
                         {% if tab == "computer" %}
                         <div class="sort-container">
                             <select id="sortField" class="sort-select">
@@ -140,6 +153,7 @@
                                 Sort
                             </button>
                         </div>
+
                         {% endif %}
                         {% if tab == 'task' %}
                         <button class="btn-new-task" onclick="document.getElementById('taskModal').style.display='flex'">+ New Task</button>
@@ -147,7 +161,8 @@
                     </div>
 
                     {% if tab == "user" %}
-                    <table class="task-table">
+
+                    <table id="userTable" class="task-table">
                         <thead>
                             <tr class="animate-row">
                                 <th>Name / ID</th>
@@ -176,15 +191,22 @@
                                     <div style="font-size:13px">{{ user.DepartmentOU }}</div>
                                     <div style="font-size:11px; color:var(--text-muted)">{{ user.Mail or 'No Mail' }}</div>
                                 </td>
-                                <td>
-                                    {% if user.LockedOut %}
-                                    <button class="btn-new-task" style="padding: 4px 8px; font-size: 12px;"
-                                            onclick="if(confirm('Unlock {{ user.DisplayName }}?')) unlockUser('{{ user.SamAccountName }}')">
-                                        Unlock
+                                <td style="display:flex; gap:6px">
+
+                                    <button class="group-btn"
+                                            onclick="showGroups('{{user.SamAccountName}}')">
+
+                                        <i class="fa-solid fa-layer-group"></i>
+
                                     </button>
-                                    {% else %}
-                                    <i class="fas fa-check" style="color: var(--accent-green)"></i>
-                                    {% endif %}
+                                    <button class="compare-btn"
+                                            onclick="compareUserGroups('{{user.SamAccountName}}', this)">
+
+                                        <i class="fa-solid fa-code-compare"></i>
+
+                                    </button>
+                                    
+
                                 </td>
                             </tr>
                             {% endfor %}
@@ -200,7 +222,7 @@
                                 <th>Priority</th>
                                 <th>Status</th>
                                 <th>Action</th>
-                                </trclass="animate-row">
+                            </tr>
                         </thead>
                         <tbody>
                             {% for task in tasks %}
@@ -219,7 +241,7 @@
                                 </td>
                                 <td>
                                     <select class="task-select badge {{ task.priority.lower() }}" onchange="updateTask('{{ task.id }}', 'priority', this.value)">
-                                        <option value="High" {% if task.priority =='High' %}selected{% endif %}>High</option>
+                                        <option value="High" {% if task.priority=='High' %}selected{% endif %}>High</option>
                                         <option value="Medium" {% if task.priority=='Medium' %}selected{% endif %}>Medium</option>
                                         <option value="Low" {% if task.priority=='Low' %}selected{% endif %}>Low</option>
                                     </select>
@@ -298,7 +320,7 @@
                                 <th>OU</th>
                                 <th>Description</th>
                                 <th>Remote</th>
-                                </trclass="animate-row">
+                            </tr>
                         </thead>
                         <tbody>
                             {% for pc in computers %}
@@ -450,6 +472,51 @@
                 </div>
             </form>
         </div>
+
+    </div>
+    <div id="groupModal" class="modal">
+
+        <div class="modal-content">
+
+            <h3>User Groups</h3>
+
+            <div id="groupList"></div>
+
+            <button class="modal-close" onclick="closeGroupModal()">
+                Close
+            </button>
+
+        </div>
+
+    </div>
+    <div id="compareModal" class="modal">
+
+        <div class="modal-content">
+
+            <h3>Compare Groups</h3>
+
+            <div>
+                <b id="compareUserA"></b> vs <b id="compareUserB"></b>
+            </div>
+
+            <table class="compare-table">
+
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>User A</th>
+                        <th>User B</th>
+                    </tr>
+                </thead>
+
+                <tbody id="compareTable"></tbody>
+
+            </table>
+
+            <button class="modal-close" onclick="closeCompare()">Close</button>
+
+        </div>
+
     </div>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
