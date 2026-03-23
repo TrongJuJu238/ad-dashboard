@@ -166,6 +166,7 @@
                         <thead>
                             <tr class="animate-row">
                                 <th>Name / ID</th>
+                                <th>WA</th>
                                 <th>Description</th>
                                 <th>Status</th>
                                 <th>OU / Email</th>
@@ -179,6 +180,8 @@
                                     <div style="font-weight:600">{{ user.DisplayName }}</div>
                                     <div style="font-size:12px; color:var(--text-muted)">#{{ user.employeeID }}</div>
                                 </td>
+
+                                <td>{{ user.SamAccountName }}</td>
                                 <td>{{ user.Description }}</td>
                                 <td>
                                     {% if user.LockedOut %}
@@ -205,7 +208,7 @@
                                         <i class="fa-solid fa-code-compare"></i>
 
                                     </button>
-                                    
+
 
                                 </td>
                             </tr>
