@@ -1,0 +1,39 @@
+{
+  "name": "it-helpdesk",
+  "version": "1.0.0",
+  "description": "IT Helpdesk Desktop App - Active Directory Management",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "backend": "python backend/server.py",
+    "build": "electron-builder"
+  },
+  "author": "IT Department - HTPVTG",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.htpvtg.it-helpdesk",
+    "productName": "IT Helpdesk",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "renderer/img/icon.ico"
+    },
+    "extraResources": [
+      { "from": "backend/", "to": "backend/" },
+      { "from": "data/", "to": "data/" }
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "!node_modules/**/*"
+    ]
+  }
+}
